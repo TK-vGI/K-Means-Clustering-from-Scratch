@@ -4,12 +4,9 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 
-# scroll down to the bottom to implement your solution
-
 
 def plot_comparison(data: np.ndarray, predicted_clusters: np.ndarray, true_clusters: np.ndarray = None,
                     centers: np.ndarray = None, show: bool = True):
-
     # Use this function to visualize the results on Stage 6.
 
     if true_clusters is not None:
@@ -47,22 +44,30 @@ def plot_comparison(data: np.ndarray, predicted_clusters: np.ndarray, true_clust
         plt.show()
 
 
-def find_nearest_center(X, centers):
+def find_nearest_center(features, centers):
     labels = []
 
-    for point in X:
+    for point in features:
         distances = np.linalg.norm(centers - point, axis=1)
         labels.append(np.argmin(distances))
 
     return np.array(labels)
 
 
+def calculate_new_centers(features, labels):
+    centers = []
+
+    for cluster_id in np.unique(labels):
+        center = features[labels == cluster_id].mean(axis=0)
+        centers.append(center)
+
+    return np.array(centers)
+
 
 if __name__ == '__main__':
-
     # Load data
-    data = load_wine(as_frame=True, return_X_y=True)
-    X_full, y_full = data
+    data_wine = load_wine(as_frame=True, return_X_y=True)
+    X_full, y_full = data_wine
 
     # Permutate it to make things more interesting
     rnd = np.random.RandomState(42)
@@ -78,9 +83,24 @@ if __name__ == '__main__':
     scaler = StandardScaler()
     X_full = scaler.fit_transform(X_full)
 
-    # write your code here
+    # # Stage1
+    # centroids = X_full[:3]
+    #
+    # result = find_nearest_center(X_full[:], centroids).tolist()
+    #
+    # ## results for Stage 1
+    # print(result)
+
+
+    # Stage2
+    # Initial centers
     centers = X_full[:3]
 
-    result = find_nearest_center(X_full[-10:], centers).tolist()
+    # Assign every observation to its nearest center
+    labels = find_nearest_center(X_full, centers)
 
-    print(result)
+    # Calculate new centers
+    new_centers = calculate_new_centers(X_full, labels).flatten().tolist()
+
+    # Results for Stage 2
+    print(new_centers)
