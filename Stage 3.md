@@ -42,3 +42,32 @@ Check out additional materials on [K-Means Clustering](https://www.youtube.com/w
 ```
 [0, 1, 1, 1, 1, 0, 0, 1, 1, 0]
 ```
+
+# Results
+
+```
+initialize centers
+↓
+assign labels
+↓
+compute new centers
+↓
+check convergence
+↓
+repeat
+```
+
+### A slightly stricter convergence check
+
+```
+if np.all(np.linalg.norm(new_centers - self.centers, axis=1) <= eps):
+    break
+```
+instead of:
+```
+shift = np.linalg.norm(new_centers - self.centers)
+
+if shift <= eps:
+    break
+```
+the first one matches the wording of the assignment more closely because it verifies each center individually.
