@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.cluster import KMeans
 from sklearn.datasets import load_wine
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -42,6 +43,37 @@ def plot_comparison(data: np.ndarray, predicted_clusters: np.ndarray, true_clust
     plt.savefig('Visualization.png', bbox_inches='tight')
     if show:
         plt.show()
+
+
+class CustomKMeans:
+    def __init__(self, k):
+        self.k = k
+        self.centers = None
+
+    def fit(self, X, eps=1e-6):
+        self.centers = X[:self.k].copy()
+
+        while True:
+
+            # Assign objects to nearest centers
+            labels = find_nearest_center(X, self.centers)
+
+            # Compute new centers
+            new_centers = calculate_new_centers(X, labels)
+
+            # Check convergence
+            shift = np.linalg.norm(new_centers - self.centers)
+
+            if shift <= eps:
+                self.centers = new_centers
+                break
+
+            self.centers = new_centers
+
+        return self
+
+    def predict(self, X):
+        return find_nearest_center(X, self.centers)
 
 
 def find_nearest_center(features, centers):
@@ -92,15 +124,26 @@ if __name__ == '__main__':
     # print(result)
 
 
-    # Stage2
-    # Initial centers
-    centers = X_full[:3]
+    # # Stage2
+    # # Initial centers
+    # centers = X_full[:3]
+    #
+    # # Assign every observation to its nearest center
+    # labels = find_nearest_center(X_full, centers)
+    #
+    # # Calculate new centers
+    # new_centers = calculate_new_centers(X_full, labels).flatten().tolist()
+    #
+    # # Results for Stage 2
+    # print(new_centers)
 
-    # Assign every observation to its nearest center
-    labels = find_nearest_center(X_full, centers)
 
-    # Calculate new centers
-    new_centers = calculate_new_centers(X_full, labels).flatten().tolist()
+    # Stage3
+    #
+    model = CustomKMeans(k=2)
 
-    # Results for Stage 2
-    print(new_centers)
+    model.fit(X_full)
+
+    predictions =model.predict(X_full[:10]).tolist()
+
+    print(predictions)
