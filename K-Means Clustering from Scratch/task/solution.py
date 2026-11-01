@@ -45,6 +45,27 @@ def plot_comparison(data: np.ndarray, predicted_clusters: np.ndarray, true_clust
         plt.show()
 
 
+def find_elbow(ks, errors):
+    points = np.column_stack((ks, errors))
+
+    start = points[0]
+    end = points[-1]
+
+    distances = []
+
+    for point in points:
+        cross = (
+                (end[0] - start[0]) * (point[1] - start[1])
+                - (end[1] - start[1]) * (point[0] - start[0])
+        )
+
+        distance = abs(cross) / np.linalg.norm(end - start)
+
+        distances.append(distance)
+
+    return ks[np.argmax(distances)]
+
+
 class CustomKMeans:
 
     def __init__(self, k):
@@ -154,20 +175,24 @@ if __name__ == '__main__':
     #
     # print(predictions)
 
-    # # Stage4
-    # errors = []
-    #
-    # for k in range(2, 11):
-    #
-    #     model = CustomKMeans(k=k)
-    #     model.fit(X_full)
-    #
-    #     errors.append(model.inertia(X_full))
-    #
-    # errors = np.array(errors).tolist()
-    #
+    # Stage4
+    errors = []
+
+    for k in range(2, 11):
+        model = CustomKMeans(k=k)
+        model.fit(X_full)
+
+        errors.append(model.inertia(X_full))
+
+    errors = np.array(errors).tolist()
+
     # print(errors)
-    #
+
+    # automatically determine the best k
+    ks = np.arange(2, 11)
+    elbow_best_k = find_elbow(ks, errors)
+    # print("Elbow Best k =", elbow_best_k)
+
     # plt.figure(figsize=(8, 5))
     #
     # plt.plot(range(2, 11), errors, marker='o')
@@ -192,16 +217,36 @@ if __name__ == '__main__':
             silhouette_score(X_full, labels)
         )
 
-    print(sil_scores)
+    # print(sil_scores)
 
-    plt.figure(figsize=(8, 5))
-    plt.plot(range(2, 11), sil_scores, marker='o')
-    plt.xlabel('k')
-    plt.ylabel('Silhouette Score')
-    plt.title('Silhouette Method')
-    plt.grid(True)
-    plt.show()
+    # plt.figure(figsize=(8, 5))
+    # plt.plot(range(2, 11), sil_scores, marker='o')
+    # plt.xlabel('k')
+    # plt.ylabel('Silhouette Score')
+    # plt.title('Silhouette Method')
+    # plt.grid(True)
+    # plt.show()
 
-    # # automatically determine the best k
-    # best_k = np.argmax(sil_scores) + 2
-    # print("Best k =", best_k)
+    # automatically determine the best k
+    silhouette_best_k = np.argmax(sil_scores) + 2
+    # print("Silhouette Best k =", silhouette_best_k)
+
+    # Stage 6
+    best_k = silhouette_best_k
+    # print('Best Elbow k:',elbow_best_k, '\nBest Silhouette k:', silhouette_best_k)
+
+    model = CustomKMeans(k=best_k)
+    model.fit(X_full)
+
+    predictions = model.predict(X_full)
+
+    print(predictions[:20].tolist())
+
+    # # visualize the result
+    # plot_comparison(
+    #     data=X_full,
+    #     predicted_clusters=predictions,
+    #     true_clusters=y_full,
+    #     centers=model.centers,
+    #     show=True
+    # )
