@@ -3,6 +3,7 @@ from sklearn.datasets import load_wine
 from matplotlib import pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score
 
 
 def plot_comparison(data: np.ndarray, predicted_clusters: np.ndarray, true_clusters: np.ndarray = None,
@@ -153,28 +154,54 @@ if __name__ == '__main__':
     #
     # print(predictions)
 
-    # Stage4
+    # # Stage4
+    # errors = []
+    #
+    # for k in range(2, 11):
+    #
+    #     model = CustomKMeans(k=k)
+    #     model.fit(X_full)
+    #
+    #     errors.append(model.inertia(X_full))
+    #
+    # errors = np.array(errors).tolist()
+    #
+    # print(errors)
+    #
+    # plt.figure(figsize=(8, 5))
+    #
+    # plt.plot(range(2, 11), errors, marker='o')
+    #
+    # plt.xlabel('k')
+    # plt.ylabel('Inertia')
+    # plt.title('Elbow Method')
+    # plt.grid(True)
+    #
+    # plt.show()
 
-    errors = []
+    # Stage5
+    sil_scores = []
 
     for k in range(2, 11):
-
-        model = CustomKMeans(k=k)
+        model = CustomKMeans(k)
         model.fit(X_full)
 
-        errors.append(model.inertia(X_full))
+        labels = model.predict(X_full)
 
-    errors = np.array(errors).tolist()
+        sil_scores.append(
+            silhouette_score(X_full, labels)
+        )
 
-    print(errors)
+    print(sil_scores)
 
     plt.figure(figsize=(8, 5))
-
-    plt.plot(range(2, 11), errors, marker='o')
-
+    plt.plot(range(2, 11), sil_scores, marker='o')
     plt.xlabel('k')
-    plt.ylabel('Inertia')
-    plt.title('Elbow Method')
+    plt.ylabel('Silhouette Score')
+    plt.title('Silhouette Method')
     plt.grid(True)
-
     plt.show()
+
+    # # automatically determine the best k
+    # best_k = np.argmax(sil_scores) + 2
+    # print("Best k =", best_k)
