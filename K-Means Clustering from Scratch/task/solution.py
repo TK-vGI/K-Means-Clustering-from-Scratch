@@ -1,5 +1,4 @@
 import numpy as np
-from sklearn.cluster import KMeans
 from sklearn.datasets import load_wine
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -46,9 +45,22 @@ def plot_comparison(data: np.ndarray, predicted_clusters: np.ndarray, true_clust
 
 
 class CustomKMeans:
+
     def __init__(self, k):
         self.k = k
         self.centers = None
+
+    def _find_nearest_center(self, X):
+        distances = np.linalg.norm(
+            X[:, np.newaxis] - self.centers, axis=2)
+
+        return np.argmin(distances, axis=1)
+
+    def _calculate_new_centers(self, X, labels):
+        return np.array([
+            X[labels == k].mean(axis=0)
+            for k in range(self.k)
+        ])
 
     def fit(self, X, eps=1e-6):
         self.centers = X[:self.k].copy()
@@ -56,12 +68,12 @@ class CustomKMeans:
         while True:
 
             # Assign objects to nearest centers
-            labels = find_nearest_center(X, self.centers)
+            labels = self._find_nearest_center(X)
 
             # Compute new centers
-            new_centers = calculate_new_centers(X, labels)
+            new_centers = self._calculate_new_centers(X, labels)
 
-            # Check convergence
+            # Check convergence - general
             shift = np.linalg.norm(new_centers - self.centers)
 
             if shift <= eps:
@@ -70,30 +82,24 @@ class CustomKMeans:
 
             self.centers = new_centers
 
+            # # Check convergence - precise <-- suggestions
+            # if np.all(
+            #         np.linalg.norm(new_centers - self.centers, axis=1) <= eps
+            # ):
+            #     self.centers = new_centers
+            # break
+
         return self
 
     def predict(self, X):
-        return find_nearest_center(X, self.centers)
+        return self._find_nearest_center(X)
 
+    def inertia(self, X):
+        labels = self.predict(X)
 
-def find_nearest_center(features, centers):
-    labels = []
-
-    for point in features:
-        distances = np.linalg.norm(centers - point, axis=1)
-        labels.append(np.argmin(distances))
-
-    return np.array(labels)
-
-
-def calculate_new_centers(features, labels):
-    centers = []
-
-    for cluster_id in np.unique(labels):
-        center = features[labels == cluster_id].mean(axis=0)
-        centers.append(center)
-
-    return np.array(centers)
+        return np.sum(
+            (X - self.centers[labels]) ** 2
+        )
 
 
 if __name__ == '__main__':
@@ -122,9 +128,9 @@ if __name__ == '__main__':
     #
     # ## results for Stage 1
     # print(result)
-
-
+    #
     # # Stage2
+    #
     # # Initial centers
     # centers = X_full[:3]
     #
@@ -137,13 +143,38 @@ if __name__ == '__main__':
     # # Results for Stage 2
     # print(new_centers)
 
-
-    # Stage3
+    # # Stage3
     #
-    model = CustomKMeans(k=2)
+    # model = CustomKMeans(k=2)
+    #
+    # model.fit(X_full)
+    #
+    # predictions = model.predict(X_full[:10]).tolist()
+    #
+    # print(predictions)
 
-    model.fit(X_full)
+    # Stage4
 
-    predictions =model.predict(X_full[:10]).tolist()
+    errors = []
 
-    print(predictions)
+    for k in range(2, 11):
+
+        model = CustomKMeans(k=k)
+        model.fit(X_full)
+
+        errors.append(model.inertia(X_full))
+
+    errors = np.array(errors).tolist()
+
+    print(errors)
+
+    plt.figure(figsize=(8, 5))
+
+    plt.plot(range(2, 11), errors, marker='o')
+
+    plt.xlabel('k')
+    plt.ylabel('Inertia')
+    plt.title('Elbow Method')
+    plt.grid(True)
+
+    plt.show()
